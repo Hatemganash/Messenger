@@ -6,7 +6,7 @@ import JGProgressHUD
 class RegisterViewController: UIViewController {
     
     private let spinner = JGProgressHUD(style: .dark)
-
+    
     
     private let scrollView :UIScrollView = {
         let scrollView = UIScrollView()
@@ -152,53 +152,146 @@ class RegisterViewController: UIViewController {
         RegisterButton.frame = CGRect(x: 30, y: passwordField.bottom+55, width: scrollView.width-60 , height: 40)
         
     }
-    @objc private func RegisterButtonTapped (){
-        firstNameField.resignFirstResponder()
-        lastNameField.resignFirstResponder()
-        emailField.resignFirstResponder()
-        passwordField.resignFirstResponder()
-        
-        
-        guard let firstName = firstNameField.text ,let lastName = lastNameField.text ,let email = emailField.text , let password = passwordField.text , !firstName.isEmpty,!lastName.isEmpty, !email.isEmpty , !password.isEmpty , password.count >= 6
-        else{
-            alertUserLoginError()
-            return
-        }
-        spinner.show(in: view)
+//    @objc private func RegisterButtonTapped (){
+//        firstNameField.resignFirstResponder()
+//        lastNameField.resignFirstResponder()
+//        emailField.resignFirstResponder()
+//        passwordField.resignFirstResponder()
+//
+//
+//        guard let firstName = firstNameField.text ,let lastName = lastNameField.text ,let email = emailField.text , let password = passwordField.text , !firstName.isEmpty,!lastName.isEmpty, !email.isEmpty , !password.isEmpty , password.count >= 6
+//        else{
+//            alertUserLoginError()
+//            return
+//        }
+//        spinner.show(in: view)
+//
+//        //Firebase LogIn
+//        DatabaseManager.shared.userExist(with: email, completion: {[weak self] exist in
+//            guard let strongSelf = self else{
+//                return
+//            }
+//            DispatchQueue.main.async {
+//                strongSelf.spinner.dismiss(animated: true)
+//
+//            }
+//            guard !exist else {
+//                self?.alertUserLoginError(message :"Looks like a user account for that email address already exist")
+//                return
+//            }
+//            FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password , completion: {authResult , error in
+//
+//                guard authResult != nil , error == nil
+//                else{
+//                    print("Error creating user")
+//                    return
+//                }
+//                let chatUser = ChatAppUser(firstName: firstName,
+//                                           lastName: lastName,
+//                                           emailAddress: email)
+//                DatabaseManager.shared.insertUser(with: chatUser, completion: { success in
+//                    if success {
+//                        guard let image = strongSelf.imageView.image,
+//                              let data = image.pngData() else {
+//                            return
+//                        }
+//                        let fileName = chatUser.profilePicUFileName
+//                        StorageManager.shared.uploadProfilePicture(with: data, fileName: fileName, completion: { result in
+//                            switch result {
+//                            case .success(let downloadUrl) :
+//                                UserDefaults.standard.set(downloadUrl , forKey: "profile_picture_url")
+//                                print(downloadUrl)
+//                            case .failure(let error) :
+//                                print("Storage manager error \(error)")
+//                            }
+//
+//                        })
+//                    }
+//                } )
+//
+//
+//                strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+//
+//            } )
+//        })
+//
+//
+//
+//    }
+    @objc private func RegisterButtonTapped() {
+           emailField.resignFirstResponder()
+           passwordField.resignFirstResponder()
+           firstNameField.resignFirstResponder()
+           lastNameField.resignFirstResponder()
 
-        //Firebase LogIn
-        DatabaseManager.shared.userExist(with: email, completion: {[weak self] exist in
-            guard let strongSelf = self else{
-                return
-            }
-            DispatchQueue.main.async {
-                strongSelf.spinner.dismiss(animated: true)
+           guard let firstName = firstNameField.text,
+               let lastName = lastNameField.text,
+               let email = emailField.text,
+               let password = passwordField.text,
+               !email.isEmpty,
+               !password.isEmpty,
+               !firstName.isEmpty,
+               !lastName.isEmpty,
+               password.count >= 6 else {
+                   alertUserLoginError()
+                   return
+           }
 
-            }
-            guard !exist else {
-                self?.alertUserLoginError(message :"Looks like a user account for that email address already exist")
-                return
-            }
-            FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password , completion: {authResult , error in
-               
-                guard authResult != nil , error == nil
-                else{
-                    print("Error creating user")
-                    return
-                }
-                DatabaseManager.shared.insertUser(with: ChatAppUser(firstName: firstName, lastName: lastName, emailAddress: email
-                
-                ))
-           
-                
-                strongSelf.navigationController?.dismiss(animated: true)
-                
-            } )
-        })
-        
-        
-        
-    }
+           spinner.show(in: view)
+
+           // Firebase Log In
+           DatabaseManager.shared.userExist(with: email, completion: { [weak self] exists in
+               guard let strongSelf = self else {
+                   return
+               }
+
+               DispatchQueue.main.async {
+                   strongSelf.spinner.dismiss()
+               }
+
+               guard !exists else {
+                   // user already exists
+                   strongSelf.alertUserLoginError(message: "Looks like a user account for that email address already exists.")
+                   return
+               }
+
+               FirebaseAuth.Auth.auth().createUser(withEmail: email, password: password, completion: { authResult, error in
+                   guard authResult != nil, error == nil else {
+                       print("Error cureating user")
+                       return
+                   }
+
+                   UserDefaults.standard.setValue(email, forKey: "email")
+                   UserDefaults.standard.setValue("\(firstName) \(lastName)", forKey: "name")
+
+
+                   let chatUser = ChatAppUser(firstName: firstName,
+                                             lastName: lastName,
+                                             emailAddress: email)
+                   DatabaseManager.shared.insertUser(with: chatUser, completion: { success in
+                       if success {
+                           // upload image
+                           guard let image = strongSelf.imageView.image,
+                               let data = image.pngData() else {
+                                   return
+                           }
+                           let filename = chatUser.profilePicUFileName
+                           StorageManager.shared.uploadProfilePicture(with: data, fileName: filename, completion: { result in
+                               switch result {
+                               case .success(let downloadUrl):
+                                   UserDefaults.standard.set(downloadUrl, forKey: "profile_picture_url")
+                                   print(downloadUrl)
+                               case .failure(let error):
+                                   print("Storage maanger error: \(error)")
+                               }
+                           })
+                       }
+                   })
+
+                   strongSelf.navigationController?.dismiss(animated: true, completion: nil)
+               })
+           })
+       }
     
     func alertUserLoginError(message : String = "Please Enter all information to Creat a new account. "){
         let alert = UIAlertController(title: "Woops", message: message , preferredStyle: .alert)
@@ -244,7 +337,7 @@ extension RegisterViewController : UIImagePickerControllerDelegate , UINavigatio
         present (actionSheet , animated : true)
     }
     func presentCamera (){
-         let vc = UIImagePickerController()
+        let vc = UIImagePickerController()
         vc.sourceType = .camera
         vc.delegate = self
         vc.allowsEditing = true
@@ -253,17 +346,17 @@ extension RegisterViewController : UIImagePickerControllerDelegate , UINavigatio
     func presentPhotoPicker(){
         let vc = UIImagePickerController()
         vc.sourceType = .photoLibrary
-       vc.delegate = self
-       vc.allowsEditing = true
-       present(vc, animated: true)
+        vc.delegate = self
+        vc.allowsEditing = true
+        present(vc, animated: true)
     }
-
+    
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         picker.dismiss(animated: true)
         guard let selectedImage = info[UIImagePickerController.InfoKey.editedImage] as? UIImage else {
             return
         }
-            
+        
         
         self.imageView.image = selectedImage
         

@@ -66,7 +66,7 @@ class LoginViewController: UIViewController {
     }()
     
     
-
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -93,7 +93,7 @@ class LoginViewController: UIViewController {
         emailField.frame = CGRect(x: 30, y: imageView.bottom+140, width: scrollView.width-60 , height: 40)
         passwordField.frame = CGRect(x: 30, y: emailField.bottom+45, width: scrollView.width-60 , height: 40)
         loginButton.frame = CGRect(x: 30, y: passwordField.bottom+55, width: scrollView.width-60 , height: 40)
-      
+        
         
     }
     
@@ -124,6 +124,8 @@ class LoginViewController: UIViewController {
                 return
             }
             let user = result.user
+            UserDefaults.standard.set(email, forKey: "email")
+            
             print("Logged In User :\(user)")
             
             strongSelf.navigationController?.dismiss(animated: true)
