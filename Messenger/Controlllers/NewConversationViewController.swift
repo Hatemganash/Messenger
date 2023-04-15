@@ -4,6 +4,7 @@ import JGProgressHUD
 
 class NewConversationViewController: UIViewController {
     
+    public var completion :(([String :String]) -> (Void))?
     private let spinner = JGProgressHUD(style: .dark)
     
     private var users = [[String: String]]()
@@ -73,6 +74,15 @@ extension NewConversationViewController :  UITableViewDelegate,UITableViewDataSo
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableview.deselectRow(at: indexPath, animated: true)
+        let tergetUserData = results[indexPath.row]
+        
+        dismiss(animated: true , completion: { [weak self] in
+            
+            self?.completion?(tergetUserData)
+
+        })
+        
+        
         
     }
 }
